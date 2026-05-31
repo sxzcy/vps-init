@@ -4,7 +4,7 @@ set -euo pipefail
 TARGET_USER="${TARGET_USER:-root}"
 SSH_PUBLIC_KEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIvWfTreCb3RCCDpCO2oEytXYs27/L3gW3b/gavJ0Cdn sxzcy1993@gmail.com'
 
-NZ_SERVER="${NZ_SERVER:-nezha.cellur.top:443}"
+NZ_SERVER="${NZ_SERVER:-nezha.knowx.top:443}"
 NZ_TLS="${NZ_TLS:-true}"
 NZ_CLIENT_SECRET="${NZ_CLIENT_SECRET:?Please set NZ_CLIENT_SECRET before running this script}"
 
