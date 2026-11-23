@@ -4,7 +4,7 @@ Debian VPS bootstrap & SSH public key helper scripts.
 
 ## 1. 一键添加 SSH 公钥 (`key.sh`)
 
-默认添加内置公钥到当前用户的 `~/.ssh/authorized_keys`（自动校验格式、去重、修正权限）：
+默认添加内置公钥到当前用户的 `~/.ssh/authorized_keys`（自动校验格式、语义去重、修正权限）：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/sxzcy/vps-init/main/key.sh)
@@ -45,10 +45,14 @@ curl -fsSL https://raw.githubusercontent.com/sxzcy/vps-init/main/setup-debian.sh
 NZ_CLIENT_SECRET='your_nezha_client_secret' bash setup-debian.sh
 ```
 
-暂不安装 Nezha Agent：
+常用组合示例：
 
 ```bash
+# 不装 Nezha Agent，只初始化系统
 INSTALL_NEZHA=no bash setup-debian.sh
+
+# 顺便改主机名 + 安装 Docker + 完成后自动重启启用新内核
+NEW_HOSTNAME=tokyo-01 INSTALL_DOCKER=yes AUTO_REBOOT=yes NZ_CLIENT_SECRET='your_secret' bash setup-debian.sh
 ```
 
 常用环境变量：
@@ -59,7 +63,12 @@ INSTALL_NEZHA=no bash setup-debian.sh
 | `SSH_PUBLIC_KEY` | 内置公钥 | 要写入的默认公钥 |
 | `SSH_GITHUB_USER` | 空 | 可选：额外同步指定 GitHub 账号的公钥 |
 | `SSH_KEY_URLS` | 空 | 可选：额外拉取的公钥 URL（空格分隔） |
-| `ENABLE_BBR` | `yes` | 是否启用 TCP BBR（内核支持时生效） |
+| `TIMEZONE` | `Asia/Shanghai` | 系统时区（设为 `keep` 保持原样） |
+| `NEW_HOSTNAME` | 空 | 可选：设置系统主机名并同步 `/etc/hosts` |
+| `SWAP_SIZE` | `auto` | `auto`（无 Swap 且内存 ≤ 2G 时自动建 1G）、具体大小如 `2G`，或 `0` 关闭 |
+| `ENABLE_BBR` | `yes` | 是否启用 TCP BBR（`fq + bbr`，内核支持时生效） |
+| `ENABLE_UNATTENDED_UPGRADES` | `yes` | 是否开启安全补丁自动更新（不自动重启） |
+| `INSTALL_DOCKER` | `no` | 设为 `yes` 时安装官方 Docker + Compose 并限制容器日志 50MB×3 |
 | `INSTALL_NEZHA` | `yes` | 设为 `no` 可跳过 Nezha Agent 安装 |
 | `NZ_SERVER` | `agent-nezha.knowx.top:443` | Nezha Agent 上报地址 |
 | `NZ_TLS` | `true` | Nezha Agent TLS 开关 |
@@ -67,9 +76,10 @@ INSTALL_NEZHA=no bash setup-debian.sh
 | `AUTO_REBOOT` | `no` | 设为 `yes` 时完成后 5 秒自动重启 |
 
 脚本会完成以下操作：
-- 非交互式更新系统与常用工具包，并按当前内核类型（cloud / 标准）显式升级内核 meta 包
-- 按需启用 TCP BBR
-- 校验并写入 SSH 公钥，确认非空后通过 `/etc/ssh/sshd_config.d/00-key-only.conf` 禁用密码登录并验证生效配置
-- 按需安全下载并安装 Nezha Agent
+- 非交互式更新系统与常用排障/运维包（`tmux`、`jq`、`dnsutils`、`mtr-tiny`、`lsof`、`ncdu`、`gnupg`、`chrony` 等），按当前内核类型（cloud / 标准）显式升级内核 meta 包
+- 统一系统时区，限制 `systemd-journald` 日志体积（`200M` / `1month`），开启仅打安全补丁的 `unattended-upgrades`
+- 小内存机器（≤ 2 GB 且无 Swap）自动兜底 1G swapfile（`vm.swappiness=10`），并按需启用 TCP BBR
+- 校验并语义去重写入 SSH 公钥，确认非空后通过 `/etc/ssh/sshd_config.d/00-key-only.conf` 禁用密码登录、开启 SSH 保活并核验生效配置
+- 按需安装 Docker（官方源 + 日志限额）和 Nezha Agent
 
 Do not close the current SSH session until a new SSH key login has been tested successfully.
